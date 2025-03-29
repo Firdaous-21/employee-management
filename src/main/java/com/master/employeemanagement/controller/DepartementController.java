@@ -7,6 +7,7 @@ import com.master.employeemanagement.service.EmployeeService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,13 +15,17 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.security.Principal;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @CrossOrigin(origins = "*")
 @RequestMapping("api/departements")
 public class DepartementController {
+    @Autowired
     private DepartementService departementService;
+    @Autowired
     private EmployeeService employeeService;
 
     @GetMapping
@@ -30,12 +35,19 @@ public class DepartementController {
     }
 
     @PostMapping
-    public ResponseEntity<Departement> addDepartement(@RequestParam String departement) {
-        Departement savedDepartement = departementService.addDepartement(departement);
+    public ResponseEntity<Departement> addDepartement(@RequestBody Map<String, String> request, Principal principal) {
+        // Check if user has proper role (handled by Spring Security)
+        String nom = request.get("nom");
+
+        if (nom == null || nom.trim().isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        Departement savedDepartement = departementService.addDepartement(nom);
         return ResponseEntity.ok(savedDepartement);
     }
 
-    @PostMapping("/{id}/employees")
+    @PostMapping(value = "/{id}/employees", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Employee> addEmployeeToDepartment(@PathVariable Long id,
                                             @RequestParam String nom,
                                             @RequestParam String email,
@@ -45,7 +57,7 @@ public class DepartementController {
         employee.setDepartement(departementService.getDepartementById(id).get());
         employee = employeeService.addEmployee(employee);
 
-        String path = "Users/LEGION/IdeaProjects/employee-management/src/main/resources/static/pictures" + employee.getId() + ".png";
+        String path = "/Users/LEGION/IdeaProjects/employee-management/src/main/resources/static/pictures/" + employee.getId() + ".png";
         file.transferTo(Path.of(path));
         String photoUrl = "http://localhost:8080/api/photos/" + employee.getId();
         employee.setPhoto(photoUrl);
@@ -53,7 +65,7 @@ public class DepartementController {
         return ResponseEntity.ok(employeeService.addEmployee(employee));
     }
 
-    @GetMapping("/photos/{id}")
+    @GetMapping("/{id}")
     public ResponseEntity<Resource> getImage(@PathVariable String id){
         String path="/Users/LEGION/IdeaProjects/employee-management/src/main/resources/static/pictures/"+id+".png";
         FileSystemResource file=new FileSystemResource(path);

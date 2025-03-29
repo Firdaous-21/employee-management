@@ -21,7 +21,7 @@ public class Employee {
     private int age;
     private String photo;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "departement_id")
     private Departement departement;
 }

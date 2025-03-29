@@ -35,7 +35,7 @@ public class EmployeeController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Boolean> deleteEmployeeById(@PathVariable Long id) {
         try {
-            String path = "Users/LEGION/IdeaProjects/employee-management/src/main/resources/static/pictures" + id + ".png";
+            String path = "/Users/LEGION/IdeaProjects/employee-management/src/main/resources/static/pictures/" + id + ".png";
             File file = new File(path);
             if(file.exists()) {
                 file.delete();
@@ -59,7 +59,7 @@ public class EmployeeController {
             employee.get().setEmail(email);
             employee.get().setAge(age);
 
-            String path = "Users/LEGION/IdeaProjects/employee-management/src/main/resources/static/pictures" + id + ".png";
+            String path = "/Users/LEGION/IdeaProjects/employee-management/src/main/resources/static/pictures/" + id + ".png";
             file.transferTo(Path.of(path));
             String photoUrl = "http://localhost:8080/api/photos/" + id;
             employee.get().setPhoto(photoUrl);

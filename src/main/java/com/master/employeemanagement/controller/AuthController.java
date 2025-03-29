@@ -33,29 +33,42 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody Map<String, String> request) {
-        String username = request.get("username");
-        String password = request.get("password");
-
-        if (username == null || password == null) {
-            return ResponseEntity.badRequest().body("Username and password are required.");
+    public ResponseEntity<Map<String, Object>> register(@RequestBody Map<String, String> request) {
+        try {
+            userService.registerUser(request.get("username"), request.get("password"));
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "User registered successfully."
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of(
+                    "success", false,
+                    "message", e.getMessage()
+            ));
         }
-
-        userService.registerUser(username, password);
-        return ResponseEntity.ok("User registered successfully.");
     }
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> request) {
-        String username = request.get("username");
-        String password = request.get("password");
+        System.out.println("Received login request for: " + request.get("username"));
 
-        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(username, password));
+        try {
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            request.get("username"),
+                            request.get("password")
+                    )
+            );
 
-        UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-        String token = jwtUtil.generateToken(userDetails.getUsername());
+            UserDetails userDetails = userDetailsService.loadUserByUsername(request.get("username"));
+            String token = jwtUtil.generateToken(userDetails.getUsername());
 
-        return ResponseEntity.ok(Map.of("token", token));
+            System.out.println("Login successful for: " + request.get("username"));
+            return ResponseEntity.ok(Map.of("token", token));
+        } catch (Exception e) {
+            System.out.println("Login failed: " + e.getMessage());
+            return ResponseEntity.status(401).body("Login failed: " + e.getMessage());
+        }
     }
 }
 
